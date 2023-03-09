@@ -1,0 +1,65 @@
+- Spotify History structure:
+        JSON file:
+            [
+                {
+                endTime (str): dateTime %Y-%M-%d %H:%M (str),
+                artistName (str): name of artist (str),
+                trackName (str): name of song (str),
+                msPlayed (str): duree de la chanson en ms (int)
+                },
+                {
+                ...
+                },
+                {
+                ...
+                }
+            ]
+
+- Spotify file path:
+        /home/administrateur/Downloads/my_spotify_data/MyData
+
+- Spotify file name:
+            /home/administrateur/Downloads/my_spotify_data/MyData/StreamingHistory0.json
+
+- Database Structure:
+    - Table artist:
+        - artist_id (INTEGER, cle)
+        - artist_name (VARCHAR)
+    - Table song:
+        - song_id (INTEGER, cle)
+        - artist_id (INTEGER)
+        - song_name (VARCHAR)
+        - listening_date (DATE)
+
+- Objet Song:
+        - artist - str
+        - track - str
+        - duration - int
+        - date - dateTime %Y-%M-D
+
+
+- Object ConnectionToDatabase:
+        - db_name - str
+
+        - connect_to_dB()
+        - create_cursor()
+        - commit_changes()
+        - close_connection()
+
+
+- Object Database:
+        - table_to_insert - tuple
+
+        - create_table()
+        - insert_into_table()
+        - read_db()
+
+
+table = (
+            "table_name",
+            [
+                "column_name_1",
+                "column_name_2"
+                "column_name_3",
+            ]
+        )
