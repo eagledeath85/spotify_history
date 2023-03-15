@@ -2,8 +2,9 @@ import json
 import os
 import re
 import sqlite3
+import datetime
 from timeit import default_timer as timer
-from tables import table_artist, table_song
+
 
 # class Database
 # table
@@ -59,6 +60,9 @@ class Song:
         return self.song_data['trackName']
 
     def get_duration(self):
+        # Convert the duration in MM:SS format
+        self.song_data['msPlayed'] = datetime.datetime.fromtimestamp(self.song_data['msPlayed'] / 1000.0).strftime(
+            "%M:%S")
         return self.song_data['msPlayed']
 
     def get_date_of_playing(self):
@@ -101,7 +105,10 @@ class Database:
 
     @staticmethod
     def create_cursor():
-        cursor = Database.connect_to_db().cursor()
+        try:
+            cursor = Database.connect_to_db().cursor()
+        except sqlite3.Error as error:
+            print("Error while creating cursor object", error)
         return cursor
 
     @staticmethod
@@ -132,53 +139,44 @@ class DatabaseActions:
             TBD
     """
 
-    def __init__(self, table_to_insert: tuple):
-        self.song_to_insert = None
+    def __init__(self, table_to_insert: dict = None, song_to_insert=None):
+        # self.song_to_insert = None
+        self.song_to_insert = song_to_insert
         self.table_to_insert = table_to_insert
+        # self.artist_table, self.song_table = table_to_insert.values()
 
-        self.table_name = table_to_insert[0]
-        self.columns_to_insert = table_to_insert[1]
+        # self.table_name = table_to_insert[0]
+        # self.columns_to_insert = table_to_insert[1]
         self.artist_last_row_id = 0
         self.artist_id_artist_name_dict = {}
 
-    def create_table(self):
-        # Getting table_name and columns name to add to the table
-        table_name = self.table_name
-        columns_to_insert = self.columns_to_insert
-        columns_list = []
-        for column_name in columns_to_insert:
-            columns_list.append(column_name)
-
-        # Create a cursor object and create table
+    @staticmethod
+    def create_table():
         cursor = Database.create_cursor()
-        create_table_sql_request = f"CREATE TABLE {table_name} ({columns_list.pop(0)} INTEGER NOT NULL PRIMARY KEY)"
-        cursor.execute(create_table_sql_request)
-        for column in columns_list:
-            alter_table_sql_request = f"ALTER TABLE {table_name} ADD {column} VARCHAR"
-            cursor.execute(alter_table_sql_request)
+        # Reading the sql script and executing the sql requests
+        with open('tables_to_create.sql', 'r', encoding='utf-8', newline='') as sqlite_file:
+            sql_script = sqlite_file.read()
+        cursor.executescript(sql_script)
+        print("SQLite script executed successfully")
 
         # Commit the changes and close the connection
         Database.commit_changes()
         Database.close_connection()
 
-    def insert_into_table(self, song_to_insert=None):
-        self.song_to_insert = song_to_insert
+    def insert_into_artist_table(self, song_to_insert):
+        artist_name = song_to_insert.get_artist()
         cursor = Database.create_cursor()
+        if artist_name not in self.artist_id_artist_name_dict.values():
+            cursor.execute(f"INSERT INTO artist (artist_name) "
+                           f"VALUES (\'{artist_name}')")
+            self.artist_last_row_id = cursor.lastrowid
+            self.artist_id_artist_name_dict.update(
+                {self.artist_last_row_id: artist_name})
 
-        # Insert into artist table
-        match self.table_name:
-            case 'artist':
-                # Check if artist_name already exists in the artist table
-                if not Song.get_artist(self.song_to_insert) in self.artist_id_artist_name_dict.values():
-                    # self.columns_to_insert[1] = artist_name
-                    cursor.execute(f"INSERT INTO {self.table_name} ({self.columns_to_insert[1]}) "
-                                   f"VALUES (\'{Song.get_artist(self.song_to_insert)}')")
-                    self.artist_last_row_id = cursor.lastrowid
-                    self.artist_id_artist_name_dict.update(
-                        {self.artist_last_row_id: Song.get_artist(self.song_to_insert)})
-
+            """
+            # Insert into song table
             case 'song':
-                # Insert into song table
+
                 insert_to_album_table_sql_request = f"INSERT INTO {self.table_name} ({self.artist_last_row_id}," \
                                                     f" {Song.get_track(self.song_to_insert)}, " \
                                                     f"{Song.get_date_of_playing(self.song_to_insert)}) " \
@@ -186,6 +184,7 @@ class DatabaseActions:
                                                     f"{Song.get_track(self.song_to_insert)}, " \
                                                     f"{Song.get_date_of_playing(self.song_to_insert)})"
                 cursor.execute(insert_to_album_table_sql_request)
+            """
 
     def read_db(self):
         pass
@@ -201,19 +200,22 @@ try:
 except FileNotFoundError:
     print("ERROR: The file doesn't exist, please check your file path")
 
-# 2. Create a database object and create table_artist table
-database = DatabaseActions(table_artist)
+# 2. Building the database
+# 2.1 Create a database object and create artist table
+database = DatabaseActions()  # previous version: DatabaseActions(table_artist)
 database.create_table()
-
-# 3. Insert
-# start = timer()
+# 2.2 Insert data into the artist table
 for song_data_dict in data:
     song = Song(song_data_dict)
-    database.insert_into_table(song)
+    database.insert_into_artist_table(song)
 Database.commit_changes()
 Database.close_connection()
-# end = timer()
-# print(end - start)
-# database = Database(table_song, song)
-# database.create_table()
-# database.insert_into_table()
+# 2.3 Create a database object and create song table
+database = DatabaseActions(table_song)
+database.create_table()
+# 2.4 Insert data into the song table
+for song_data_dict in data:
+    song = Song(song_data_dict)
+    database.insert_into_artist_table(song)
+Database.commit_changes()
+Database.close_connection()
