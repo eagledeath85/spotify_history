@@ -29,7 +29,8 @@
         - song_id (INTEGER, cle)
         - artist_id (INTEGER)
         - song_name (VARCHAR)
-        - listening_date (DATE)
+        - duration (TIME)
+        - listening_date (TIMESTAMP)
 
 - Objet Song:
         - artist - str
@@ -38,7 +39,7 @@
         - date - dateTime %Y-%M-D
 
 
-- Object ConnectionToDatabase:
+- Object Database:
         - db_name - str
 
         - connect_to_dB()
@@ -47,12 +48,11 @@
         - close_connection()
 
 
-- Object Database:
-        - table_to_insert - tuple
+- Object DatabaseActions:
 
         - create_table()
-        - insert_into_table()
-        - read_db()
+        - insert_into_artist_table()
+        - insert_into_song_table()
 
 
 table = (

@@ -125,19 +125,14 @@ class DatabaseActions:
     """
     Create a database instance to write data into
 
-    Attributes:
-    ----------
-    table_to_insert: tuple
-        The table to create into the database
-
     Methods:
     -------
     create_table():
         create a given table in the dB
-        insert_into_table():
-            alter the table by adding data
-        read_db():
-            TBD
+    insert_into_artist_table():
+        alter the artist table by adding data
+    insert_into_song_table():
+        alter the artist table by adding data
     """
 
     def __init__(self):
@@ -181,9 +176,6 @@ class DatabaseActions:
             f"INSERT INTO song (artist_id, song_name, duration, playing_date) "
             f"VALUES ({song_artist_id}, \'{song_name}', \'{song_duration}', \'{song_playing_date}')")
 
-    def read_db(self):
-        pass
-
 
 # MAIN PROGRAM
 print("PROGRAM STARTS")
@@ -196,14 +188,17 @@ except FileNotFoundError:
     print("ERROR: The file doesn't exist, please check your file path")
 
 # 2. Building the database
-# 2.1 Create a database object and create artist table
+# 2.1 Create a database object and create artist, song tables
 database = DatabaseActions()
 database.create_table()
+
 # 2.2 Insert data into artist table and song_table
 for song_data_dict in data:
     song = Song(song_data_dict)
     database.insert_into_artist_table(song)
     database.insert_into_song_table(song)
+
+# 2.3 Commit changes and close connection to dB
 Database.commit_changes()
 Database.close_connection()
 print("END OF PROGRAM")
